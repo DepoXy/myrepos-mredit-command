@@ -92,10 +92,33 @@ check_dep_with_hint () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _mredit () {
-  local omr_path
   local try_path="$(pwd)"
 
-  # Pattern #1: Look for basic `^[{path}]` pattern.
+  find_and_open_match "${try_path}"
+
+  # If nothing found, try a third time with project root path,
+  # using same relative directory if under symlink.
+  if [ ${cmd_status} -ne 0 ]; then
+    try_path="$(git_project_root_absolute)"
+
+    find_and_open_match "${try_path}"
+
+    # Finally, if nothing found, try a final time with absolute
+    # project root path.
+    if [ ${cmd_status} -ne 0 ]; then
+      try_path="$(git_project_root_relative)"
+
+      find_and_open_match "${try_path}"
+    fi
+  fi
+}
+
+# ***
+
+find_and_open_match () {
+  local try_path="$1"
+
+  local omr_path
 
   # Normalize the search path.
   omr_path="$(normal_path2mrconfig_path "${try_path}")"
@@ -209,6 +232,10 @@ report_progress () {
 
 git_project_root_absolute () {
   git rev-parse --show-toplevel
+}
+
+git_project_root_relative () {
+  (cd "./$(git rev-parse --show-cdup)" && pwd -L)
 }
 
 # ***
