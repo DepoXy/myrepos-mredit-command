@@ -88,7 +88,7 @@ mredit — Locate and edit myrepos config fastly 🧜
 
   These commands require
   [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`),
-  [`jq`](https://github.com/stedolan/jq), and
+  [`jq`](https://github.com/stedolan/jq), `mktemp`, and
   `realpath`.
 
   - Debian:
@@ -97,7 +97,7 @@ mredit — Locate and edit myrepos config fastly 🧜
 
   - macOS:
 
-        brew install jq rg realpath
+        brew install jq rg coreutils realpath
 
 ## SEE ALSO
 

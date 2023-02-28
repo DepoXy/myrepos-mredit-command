@@ -17,6 +17,7 @@ check_deps () {
 
   check_dep_jq || failed=true
   check_dep_rg || failed=true
+  check_dep_mktemp || failed=true
   # Called on-demand:
   #  check_dep_gvim_open_kindness || failed=true
   check_dep_realpath || failed=true
@@ -48,6 +49,14 @@ check_dep_gvim_open_kindness () {
   check_dep_with_hint "gvim-open-kindness"
 }
 
+check_dep_mktemp () {
+  hint_install_deb () { >&2 echo "  sudo apt-get install coreutils"; }
+  hint_install_brew () { >&2 echo "  brew install coreutils"; }
+
+  check_dep_with_hint "mktemp"
+}
+
+# Also `mktemp` is from coreutils on both OSes.
 check_dep_realpath () {
   ( true \
     && command -v realpath > /dev/null \
@@ -83,28 +92,29 @@ check_dep_with_hint () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _mredit () {
-  local cwd_path="$(pwd)"
   local omr_path
+  local try_path="$(pwd)"
 
   # Pattern #1: Look for basic `^[{path}]` pattern.
 
-  omr_path="$(normal_path2mrconfig_path "${cwd_path}")"
+  # Normalize the search path.
+  omr_path="$(normal_path2mrconfig_path "${try_path}")"
 
+  # Look for `^[{path}]` pattern matches.
   local match
-  match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}")"
+  match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
   cmd_status=$?
 
+  # If nothing found, try again with the absolute path.
   if [ ${cmd_status} -ne 0 ]; then
     [ ${cmd_status} -eq 11 ] && exit 1
 
-    # Pattern #2: Try again, but with absolute path (resolve symlinks in it).
-    if true; then echo "realpath -- ${cwd_path}" ; realpath -- "${cwd_path}" ; fi
-    local abs_path="$(realpath -- "${cwd_path}")"
+    local abs_path="$(realpath -- "${try_path}")"
 
-    if [ "${abs_path}" != "${cwd_path}" ]; then
+    if [ "${abs_path}" != "${try_path}" ]; then
       omr_path="$(normal_path2mrconfig_path "${abs_path}")"
 
-      match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}")"
+      match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
       cmd_status=$?
     fi
   fi
@@ -162,6 +172,47 @@ open_match_in_editor () {
   fi
 }
 
+# ***
+
+MREDIT_PROG_F=""
+
+create_progress_f () {
+  MREDIT_PROG_F="$(mktemp)"
+}
+
+cleanup_progress_f () {
+  [ -e "${MREDIT_PROG_F}" ] || return 0
+
+  /bin/rm -f "${MREDIT_PROG_F}"
+}
+
+capture_progress () {
+  local error_f="$1"
+  shift
+
+  if [ -z "${error_f}" ]; then
+    error_f="$(mktemp)"
+    # A little hacky...
+    MREDIT_PROG_F="${error_f}"
+  fi
+
+  echo "$@" >> "${error_f}"
+}
+
+report_progress () {
+  [ -e "${MREDIT_PROG_F}" ] || return 0
+ 
+  >&2 cat "${MREDIT_PROG_F}"
+}
+
+# ***
+
+git_project_root_absolute () {
+  git rev-parse --show-toplevel
+}
+
+# ***
+
 normal_path2mrconfig_path () {
   local omr_path="$1"
 
@@ -184,6 +235,7 @@ normal_path2mrconfig_path () {
 print_match () {
   local rawpath="$1"
   local targetp="$2"
+  local progr_f="$3"
 
   # Note that a common OMR path strategy is to use an environment
   # prefix, e.g., `[${MY_WORK:-${HOME}/work}/path/to/project]`,
@@ -198,19 +250,19 @@ print_match () {
   # - Final, add the `^\[` prefix and `]` suffix.
   pattpath="^\\[${pattpath}]"
 
+  capture_progress "${progr_f}" "Searching candidate:" \
+    "$(echo ${rawpath} | sed 's/\\//'g)"
+  capture_progress "${progr_f}" "- Proj path: ${rawpath}"
+  capture_progress "${progr_f}" "  Match pat: ${pattpath}"
+  capture_progress "${progr_f}" "  Cfgs path: ${targetp}"
+
   local fmt_json=true
   local cmd_status
 
   matches="$(rg_search "${pattpath}" "${targetp}" ${fmt_json})"
   cmd_status=$?
 
-  if [ ${cmd_status} -ne 0 ]; then
-    >&2 echo "- No match: ${rawpath}"
-    >&2 echo "  Match re: ${pattpath}"
-    >&2 echo "  For path: ${targetp}"
-
-    return 1
-  fi
+  [ ${cmd_status} -eq 0 ] || return 1
 
   local print_matches=false
 
@@ -244,6 +296,10 @@ print_match () {
 
     final_match="${match}"
   done <<< "${matches}"
+
+  if [ -n "${final_match}" ]; then
+    capture_progress "${progr_f}" "  ** Matched!"
+  fi
 
   if ${print_matches}; then
     local picked
@@ -321,7 +377,12 @@ main () {
 
   parse_args "$@"
 
+  create_progress_f
+
   _mredit
+  [ $? -eq 0 ] || report_progress
+
+  cleanup_progress_f
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
