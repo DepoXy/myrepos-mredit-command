@@ -165,11 +165,14 @@ open_match_in_editor () {
 normal_path2mrconfig_path () {
   local omr_path="$1"
 
+  # FIXME/2023-02-27: Decouple these translations.
+  #
   # Correct for ~/.vim/.mrconfigs, whose projects are relative, e.g.,:
   #   [pack/landonb/start/dubs_edit_juice]
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.vim/##")"
   # Same for .gopath projects:
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.gopath/##")"
+
   # Finally, correct home projects in general → use ${HOME}, not /home/user.
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}(/|$)#\\\\\$\\\\{HOME}\1#")"
 
