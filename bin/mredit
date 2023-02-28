@@ -40,7 +40,7 @@ check_dep_rg () {
 }
 
 check_dep_gvim_open_kindness () {
-  hint_install_gok () { >&2 echo "  https://XXX"; }
+  hint_install_gok () { >&2 echo "  https://github.com/DepoXy/gvim-open-kindness#🐬"; }
   hint_install_deb () { hint_install_gok; }
   hint_install_brew () { hint_install_gok; }
 
