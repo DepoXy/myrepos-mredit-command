@@ -116,6 +116,8 @@ _mredit () {
   open_match_in_editor "${match}" ${MREDIT_USE_GVIM}
 }
 
+# ***
+
 # Opens result in (Terminal) vim.
 open_match_in_editor () {
   local match="$1"
@@ -173,6 +175,8 @@ normal_path2mrconfig_path () {
 
   echo "${omr_path}"
 }
+
+# ***
 
 print_match () {
   local rawpath="$1"
