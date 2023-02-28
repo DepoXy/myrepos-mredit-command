@@ -128,9 +128,11 @@ find_and_open_match () {
   match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
   cmd_status=$?
 
+  # print_match was called in a $(subshell) so exit on special return code.
+  [ ${cmd_status} -eq 11 ] && exit 1
+
   # If nothing found, try again with the absolute path.
   if [ ${cmd_status} -ne 0 ]; then
-    [ ${cmd_status} -eq 11 ] && exit 1
 
     local abs_path="$(realpath -- "${try_path}")"
 
