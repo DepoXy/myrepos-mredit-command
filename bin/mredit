@@ -1,0 +1,309 @@
+#!/usr/bin/env bash
+# vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: https://github.com/DepoXy/myrepos-mredit-command#🧜
+# License: MIT
+
+# Copyright (c) © 2020-2023 Landon Bouma. All Rights Reserved.
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+check_deps () {
+  local failed=false
+
+  check_dep_jq || failed=true
+  check_dep_rg || failed=true
+  # Called on-demand:
+  #  check_dep_gvim_open_kindness || failed=true
+
+  ${failed} && exit 1
+}
+
+# ***
+
+check_dep_jq () {
+  hint_install_deb () { >&2 echo "  sudo apt-get install jq"; }
+  hint_install_brew () { >&2 echo "  brew install jq"; }
+
+  check_dep_with_hint "jq"
+}
+
+check_dep_rg () {
+  hint_install_deb () { >&2 echo "  sudo apt-get install rg"; }
+  hint_install_brew () { >&2 echo "  brew install rg"; }
+
+  check_dep_with_hint "rg"
+}
+
+check_dep_gvim_open_kindness () {
+  hint_install_gok () { >&2 echo "  https://XXX"; }
+  hint_install_deb () { hint_install_gok; }
+  hint_install_brew () { hint_install_gok; }
+
+  check_dep_with_hint "gvim-open-kindness"
+}
+
+check_dep_with_hint () {
+  cmd="$1"
+  name="${2:-${cmd}}"
+  assume_failed=${3:-false}
+
+  if ! ${assume_failed}; then
+    command -v ${cmd} > /dev/null && return 0 || true
+  fi
+
+  os_is_macos () { [ "$(uname)" = 'Darwin' ]; }
+
+  >&2 echo "ERROR: Requires ‘${cmd}’"
+  >&2 echo "- Hint: Install ‘${cmd}’, e.g.:"
+  os_is_macos && hint_install_brew || hint_install_deb 
+
+  return 1
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_mredit () {
+  local use_gvim=false
+
+  while [ "$1" != '' ]; do
+    case $1 in
+      -g | --gvim | gvim)
+        use_gvim=true
+
+        shift
+        ;;
+      *)
+        >&2 echo "ERROR: Unrecognized argument: “$1”"
+
+        exit 1
+        ;;
+    esac
+  done
+
+  # ***
+
+  local cwd_path="$(pwd)"
+  local omr_path
+
+  # Pattern #1: Look for basic `^[{path}]` pattern.
+
+  omr_path="$(normal_path2mrconfig_path "${cwd_path}")"
+
+  local match
+  match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}")"
+  cmd_status=$?
+
+  if [ ${cmd_status} -ne 0 ]; then
+    [ ${cmd_status} -eq 11 ] && exit 1
+
+    # Pattern #2: Try again, but with absolute path (resolve symlinks in it).
+    if true; then echo "realpath -- ${cwd_path}" ; realpath -- "${cwd_path}" ; fi
+    local abs_path="$(realpath -- "${cwd_path}")"
+
+    if [ "${abs_path}" != "${cwd_path}" ]; then
+      omr_path="$(normal_path2mrconfig_path "${abs_path}")"
+
+      match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}")"
+      cmd_status=$?
+    fi
+  fi
+
+  if [ ${cmd_status} -ne 0 ]; then
+    return ${cmd_status}
+  fi
+
+  open_match_in_editor "${match}" ${use_gvim}
+}
+
+# Opens result in (Terminal) vim.
+open_match_in_editor () {
+  local match="$1"
+  local use_gvim=$2
+
+  local file
+  local row
+  local col=0
+  file="$(echo "${match}" | jq -r '.data.path.text')"
+  row="$(echo "${match}" | jq -r '.data.line_number')"
+
+  if [ -z "${file}" ] || [ -z "${row}" ]; then
+    >&2 echo "ERROR: Unexpectedly missing file and/or line number:"
+    >&2 echo "- file: ${file}"
+    >&2 echo "- line: ${row}"
+    >&2 echo "- match: ${match}"
+
+    return 1
+  fi
+
+  if ! ${use_gvim}; then
+    vim -c "call cursor(${row}, ${col})" "${file}"
+  else
+    if check_dep_gvim_open_kindness; then
+      gvim-open-kindness "" "${row}" "${col}" "${file}"
+    else
+      local servername=""
+      if [ -n "${GVIM_OPEN_SERVERNAME}" ] || [ -z "${GVIM_OPEN_SERVERNAME+x}" ]; then
+        servername="--servername ${GVIM_OPEN_SERVERNAME:-SAMPI}"
+      fi
+      gvim ${servername} --remote-silent "$(echo "${file}" | sed "s/^b//")"
+      gvim ${servername} --remote-send "<ESC>:call cursor("${row}", "${col}")<CR>"
+      # Show user hint on using gvim-open-kindness.
+      if ${MREDIT_KINDNESS_HINT_DISABLE:-false}; then
+        local gvok_url="https://github.com/DepoXy/gvim-open-kindness#🐬"
+        echo "HINT: Install gvim-open-kindness for better options:"
+        echo "    ${gvok_url}"
+        echo "- Or you can disable this message:"
+        echo "    export MREDIT_KINDNESS_HINT_DISABLE=true"
+      fi
+    fi
+  fi
+}
+
+normal_path2mrconfig_path () {
+  local omr_path="$1"
+
+  # Correct for ~/.vim/.mrconfigs, whose projects are relative, e.g.,:
+  #   [pack/landonb/start/dubs_edit_juice]
+  omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.vim/##")"
+  # Same for .gopath projects:
+  omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.gopath/##")"
+  # Finally, correct home projects in general → use ${HOME}, not /home/user.
+  omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}(/|$)#\\\\\$\\\\{HOME}\1#")"
+
+  echo "${omr_path}"
+}
+
+print_match () {
+  local rawpath="$1"
+  local targetp="$2"
+
+  # Note that a common OMR path strategy is to use an environment
+  # prefix, e.g., `[${MY_WORK:-${HOME}/work}/path/to/project]`,
+  # which we can easily (well, regex-easily) accommodate.
+  local pattpath
+  # - First add optional `}?` before each path separator.
+  pattpath="$(echo "${rawpath}" | sed -E "s#/#\\\\}?/#g")"
+  # - Then add a pattern to ignore the prefix `${ENVIRON:-`.
+  pattpath="(\\\$\\{[A-Z_]+:-)*${pattpath}"
+  # - Ignore final } in }]
+  pattpath="${pattpath}\\}?"
+  # - Final, add the `^\[` prefix and `]` suffix.
+  pattpath="^\\[${pattpath}]"
+
+  local fmt_json=true
+  local cmd_status
+
+  matches="$(rg_search "${pattpath}" "${targetp}" ${fmt_json})"
+  cmd_status=$?
+
+  if [ ${cmd_status} -ne 0 ]; then
+    >&2 echo "- No match: ${rawpath}"
+    >&2 echo "  Match re: ${pattpath}"
+    >&2 echo "  For path: ${targetp}"
+
+    return 1
+  fi
+
+  local print_matches=false
+
+  local n_matches
+  n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
+  if [ ${n_matches} -gt 1 ]; then
+    >&2 echo "Multiple matches found:"
+    # DEV:
+    #   >&2 rg_search "${pattpath}" "${targetp}" false
+
+    print_matches=true
+  fi
+
+  local match
+  local final_match=""
+  local file
+  local line
+  local index=0
+
+  while read match; do
+    line="$(echo "${match}" | jq -r '.data.line_number' --exit-status)"
+    [ $? -eq 0 ] || continue
+
+    file="$(echo "${match}" | jq -r '.data.path.text' --exit-status)"
+
+    if ${print_matches}; then
+      let 'index += 1'
+
+      >&2 echo "[${index}]: ${file}:${line}"
+    fi
+
+    final_match="${match}"
+  done <<< "${matches}"
+
+  if ${print_matches}; then
+    local picked
+
+    >&2 printf "Please pick a match: "
+
+    read picked
+
+    final_match=""
+    index=0
+    while read match; do
+      line="$(echo "${match}" | jq -r '.data.line_number' --exit-status)"
+      [ $? -eq 0 ] || continue
+
+      let 'index += 1'
+      if [ ${index} -eq ${picked} ]; then
+        final_match="${match}"
+
+        break
+      fi
+    done <<< "${matches}"
+
+    if [ -z "${final_match}" ]; then
+      >&2 echo "Nothing picked!"
+
+      return 11
+    fi
+  fi
+
+  [ -n "${final_match}" ] || return 1
+
+  echo "${final_match}"
+}
+
+# ***
+
+rg_search () {
+  local pattpath="$1"
+  local targetp="$2"
+  local fmt_json=$3
+
+  local json=""
+  local color="always"
+  ${fmt_json} && json="--json" && color="never"
+
+  /usr/bin/env rg \
+    --hidden --follow --line-number --color "${color}" \
+    --no-ignore-vcs --no-ignore-parent \
+    ${json} "${pattpath}" "${targetp}"
+}
+
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
+
+main () {
+  check_deps
+
+  _mredit "$@"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# Only run when executed; no-op when sourced.
+if [ "$0" = "${BASH_SOURCE}" ]; then
+  main "$@"
+fi
+

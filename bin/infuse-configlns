@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# vim:tw=0:ts=2:sw=2:et:norl:nospell:ft=bash
+# Author: Landon Bouma (landonb &#x40; retrosoft &#x2E; com)
+# Project: https://github.com/DepoXy/myrepos-mredit-command#🧜
+# License: MIT
+
+# Copyright (c) © 2020-2023 Landon Bouma. All Rights Reserved.
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+remove_existing_links () {
+  find . -type l -exec /bin/rm {} +
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+must_print_mrtrust_path () {
+  local mrtrust_file="${HOME}/.mrtrust"
+
+  if [ ! -f "${mrtrust_file}" ]; then
+    >&2 echo "ERROR: Missing mrtrust file: ${mrtrust_file}"
+
+    exit 1
+  fi
+
+  printf "%s" "${mrtrust_file}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+infuse_projects_links_omr_config () {
+  local mrtrust_file="$1"
+
+  local before_cd="$(pwd -L)"
+
+  mkdir -p "${MREDIT_CONFIGS}"
+
+  cd "${MREDIT_CONFIGS}"
+
+  echo "Creating links under $(pwd)…"
+
+  remove_existing_links
+
+  # The ~/.mrconfig is inherently trusted and generally no included
+  # in ~/.mrtrust
+  infuse_create_symlinks_omr_config "${HOME}/.mrconfig"
+
+  infuse_create_symlinks_omr_mrtrust "${mrtrust_file}"
+
+  cd "${before_cd}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+infuse_create_symlinks_omr_mrtrust () {
+  local mrtrust_file="$1"
+
+  local line
+  while read -r line; do
+    infuse_create_symlinks_omr_config "${line}"
+  done < "${mrtrust_file}"
+}
+
+infuse_create_symlinks_omr_config () {
+  local line="$1"
+
+  # Skip comment lines (completely unnecessary because strict regex later).
+  [[ "${line}" =~ ^[[:space:]]*# ]] && \
+    return 0
+
+  # Skip blank lines.
+  [[ "${line}" =~ ^$ ]] && \
+    return 0
+
+  # Verify the path.
+  if [ ! -f "${line}" ]; then
+    >&2 echo "ERROR: ~/.mrtrust refs nonexistent file: ${line}"
+
+    return 0
+  fi
+
+  symlink "${line}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+symlink () {
+  local source="$1"
+
+  # Build the hierarchy.
+  local relative_dir
+  relative_dir="$(dirname "${source}" | sed 's#^/##')"
+
+  mkdir -p "${relative_dir}"
+
+  # Make the symlink.
+  local config_file
+  config_file="$(basename "${source}")"
+
+  local target="${relative_dir}/${config_file}"
+
+  /bin/ln -s "${source}" "${target}"
+
+  # `ln` happily makes symlink to non-existent target, which we
+  # will allow (which is a Good Thing, e.g., `rg` complains on
+  # broken links, which'll alert user to the problem). But we'll
+  # also check ourselves, to be proactive.
+  if [ -e "${source}" ]; then
+    let 'INFUSE_SYMLINKS_CNT += 1'
+  else
+    # This path unreachable in this script, but the `symlink`
+    # COPYD from DepoXy, so keeping similar (except this comment).
+    let 'INFUSE_SYMLINKS_NOK += 1'
+
+    >&2 echo "WARN: Phantom target symlinked: ${source}"
+    >&2 echo "- You'll see broken symlink at: $(pwd)/${target}"
+  fi
+}
+
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
+
+main () {
+  INFUSE_SYMLINKS_CNT=0
+  INFUSE_SYMLINKS_NOK=0
+
+  local mrtrust_file
+  mrtrust_file="$(must_print_mrtrust_path)"
+
+  infuse_projects_links_omr_config "${mrtrust_file}"
+
+  local nok_msg=""
+  [ ${INFUSE_SYMLINKS_NOK} -eq 0 ] || nok_msg=" (${INFUSE_SYMLINKS_NOK} broken)"
+  echo "- Created ${INFUSE_SYMLINKS_CNT} symlinks${nok_msg}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+set -e
+
+# Only run when executed; no-op when sourced.
+if [ "$0" = "${BASH_SOURCE}" ]; then
+  main "$@"
+fi
+

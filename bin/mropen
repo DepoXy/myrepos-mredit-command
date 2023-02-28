@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: https://github.com/DepoXy/myrepos-mredit-command#🧜
+# License: MIT
+
+# Copyright (c) © 2020-2023 Landon Bouma. All Rights Reserved.
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# Only run when executed; no-op when sourced.
+if [ "$0" = "${BASH_SOURCE}" ]; then
+  mredit --gvim "$@"
+fi
+
