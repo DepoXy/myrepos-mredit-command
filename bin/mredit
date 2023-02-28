@@ -19,6 +19,7 @@ check_deps () {
   check_dep_rg || failed=true
   # Called on-demand:
   #  check_dep_gvim_open_kindness || failed=true
+  check_dep_realpath || failed=true
 
   ${failed} && exit 1
 }
@@ -45,6 +46,20 @@ check_dep_gvim_open_kindness () {
   hint_install_brew () { hint_install_gok; }
 
   check_dep_with_hint "gvim-open-kindness"
+}
+
+check_dep_realpath () {
+  ( true \
+    && command -v realpath > /dev/null \
+    && realpath --version 2> /dev/null | head -1 | grep -q -e "(GNU coreutils)" \
+  ) && return 0 || true
+
+  hint_install_deb () { >&2 echo "  sudo apt-get install coreutils"; }
+  hint_install_brew () { >&2 echo "  brew install realpath"; }
+
+  check_dep_with_hint 'realpath' 'realpath (from coreutils)' true
+
+  return 1
 }
 
 check_dep_with_hint () {
