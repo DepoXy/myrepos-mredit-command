@@ -68,25 +68,6 @@ check_dep_with_hint () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _mredit () {
-  local use_gvim=false
-
-  while [ "$1" != '' ]; do
-    case $1 in
-      -g | --gvim | gvim)
-        use_gvim=true
-
-        shift
-        ;;
-      *)
-        >&2 echo "ERROR: Unrecognized argument: “$1”"
-
-        exit 1
-        ;;
-    esac
-  done
-
-  # ***
-
   local cwd_path="$(pwd)"
   local omr_path
 
@@ -117,7 +98,7 @@ _mredit () {
     return ${cmd_status}
   fi
 
-  open_match_in_editor "${match}" ${use_gvim}
+  open_match_in_editor "${match}" ${MREDIT_USE_GVIM}
 }
 
 # Opens result in (Terminal) vim.
@@ -294,10 +275,31 @@ rg_search () {
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
 
+MREDIT_USE_GVIM=false
+
+parse_args () {
+  while [ "$1" != '' ]; do
+    case $1 in
+      -g | --gvim | gvim)
+        MREDIT_USE_GVIM=true
+
+        shift
+        ;;
+      *)
+        >&2 echo "ERROR: Unrecognized argument: “$1”"
+
+        exit 1
+        ;;
+    esac
+  done
+}
+
 main () {
   check_deps
 
-  _mredit "$@"
+  parse_args "$@"
+
+  _mredit
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
