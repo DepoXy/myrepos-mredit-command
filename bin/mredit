@@ -216,7 +216,7 @@ capture_progress () {
   shift
 
   if [ -z "${error_f}" ]; then
-    error_f="$(mktemp)"
+    error_f="$(mktemp --suffix='.mredit')"
     # A little hacky...
     MREDIT_PROG_F="${error_f}"
   fi
