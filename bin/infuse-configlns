@@ -13,7 +13,7 @@ MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 source_deps () {
-  . "$(dirname "$(realpath "$0")")/../lib/symlink.sh"
+  . "$(dirname "$(realpath "$0")")/../lib/link_deep.sh"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -89,7 +89,7 @@ infuse_create_symlinks_omr_config () {
     return 0
   fi
 
-  symlink "${line}"
+  link_deep "${line}"
 }
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #

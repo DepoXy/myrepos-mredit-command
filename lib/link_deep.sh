@@ -10,12 +10,12 @@
 
 # This is an overly-zealous DRY file.
 #
-# - The symlink fcn. is located here (and not in bin/infuse-configlns) so
-#   upstream depoxy-ambers can use without maintaining an identical copy.
+# - The deep_link fcn. is located here (and not in bin/infuse-configlns) so
+#   upstream depoxy-ambers can reuse without maintaining an identical copy.
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-symlink () {
+deep_link () {
   local source="$1"
   local warn_cmd="${2:-echo}"
 
@@ -50,7 +50,7 @@ symlink () {
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
 
 main () {
-  symlink "$@"
+  deep_link "$@"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
