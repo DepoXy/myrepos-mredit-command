@@ -127,6 +127,8 @@ main () {
   INFUSE_SYMLINKS_CNT=0
   INFUSE_SYMLINKS_NOK=0
 
+  set -e
+
   local mrtrust_file
   mrtrust_file="$(must_print_mrtrust_path)"
 
@@ -138,8 +140,6 @@ main () {
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-
-set -e
 
 # Only run when executed; no-op when sourced.
 if [ "$0" = "${BASH_SOURCE}" ]; then
