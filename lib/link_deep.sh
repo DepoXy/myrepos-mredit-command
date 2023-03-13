@@ -8,10 +8,6 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# This is an overly-zealous DRY file.
-#
-# - The deep_link fcn. is located here (and not in bin/infuse-configlns) so
-#   upstream depoxy-ambers can reuse without maintaining an identical copy.
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
