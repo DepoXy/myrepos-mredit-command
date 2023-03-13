@@ -33,7 +33,6 @@ remove_symlink_hierarchy_safe () {
 
 link_deep () {
   local source="$1"
-  local warn_cmd="${2:-echo}"
 
   # Build the hierarchy.
   local relative_dir
@@ -58,8 +57,8 @@ link_deep () {
   else
     let 'INFUSE_SYMLINKS_NOK += 1'
 
-    >&2 ${warn_cmd} "WARN: Phantom target symlinked: ${source}"
-    >&2 ${warn_cmd} "- You'll see broken symlink at: $(pwd)/${target}"
+    >&2 warn "Phantom target symlinked: ${source}"
+    >&2 warn "- You'll see broken symlink at: $(pwd)/${target}"
   fi
 }
 

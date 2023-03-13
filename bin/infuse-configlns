@@ -13,6 +13,9 @@ MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 source_deps () {
+  # Sets LOG_LEVEL=${LOG_LEVEL:-40}.
+  source_dep "deps/sh-logger/bin/logger.sh"
+
   # Load: link_deep, and remove_symlink_hierarchy_safe.
   source_dep "lib/link_deep.sh"
 }
