@@ -375,9 +375,14 @@ rg_search () {
   ${fmt_json} && json="--json" && color="never"
 
   /usr/bin/env rg \
-    --hidden --follow --line-number --color "${color}" \
-    --no-ignore-vcs --no-ignore-parent \
-    ${json} "${pattpath}" "${targetp}"
+    --hidden \
+    --follow \
+    --line-number \
+    --color "${color}" \
+    --no-ignore-vcs \
+    --no-ignore-parent \
+    ${json} \
+    "${pattpath}" "${targetp}"
 }
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
