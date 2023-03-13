@@ -381,6 +381,7 @@ rg_search () {
     --color "${color}" \
     --no-ignore-vcs \
     --no-ignore-parent \
+    --sort "path" \
     ${json} \
     "${pattpath}" "${targetp}"
 }
