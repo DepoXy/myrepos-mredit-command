@@ -33,18 +33,24 @@ remove_symlink_hierarchy_safe () {
 
 link_deep () {
   local source="$1"
+  local target="$2"
 
   # Build the hierarchy.
   local relative_dir
-  relative_dir="$(dirname "${source}" | sed 's#^/##')"
+  local target
+  if [ -z "${target}" ]; then
+    relative_dir="$(dirname -- "${source}" | sed 's#^/##')"
+
+    # Make the symlink.
+    local target_file
+    target_file="$(basename -- "${source}")"
+
+    target="${relative_dir}/${target_file}"
+  else
+    relative_dir="$(dirname -- "${target}")"
+  fi
 
   mkdir -p "${relative_dir}"
-
-  # Make the symlink.
-  local config_file
-  config_file="$(basename "${source}")"
-
-  local target="${relative_dir}/${config_file}"
 
   # In lieu of GNU `ln -sT` or BSD `ln -sh`, which won't follow
   # an existing target symlink, check ourselves if target exists.
