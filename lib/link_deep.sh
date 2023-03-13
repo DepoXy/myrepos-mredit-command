@@ -46,7 +46,35 @@ link_deep () {
 
   local target="${relative_dir}/${config_file}"
 
-  /bin/ln -s "${source}" "${target}"
+  # In lieu of GNU `ln -sT` or BSD `ln -sh`, which won't follow
+  # an existing target symlink, check ourselves if target exists.
+  # - This is because default symlink behavior follows target links,
+  #   e.g., if you ran the following:
+  #     $ mkdir /tmp/ln-test && cd /tmp/ln-test &&
+  #       mkdir bar && ln -s bar foo && ln -s bar foo
+  #   you'd end up with the symlink you want, `foo -> bar/`, but
+  #   also a symlink you probably don't want, `bar/bar -> bar`.
+  # - In contrast:
+  #     $ mkdir /tmp/ln-test && cd /tmp/ln-test &&
+  #       mkdir bar && ln -sT bar foo && ln -sT bar foo
+  #   creates just `foo -> bar/` and then prints:
+  #     ln: failed to create symbolic link 'foo': File exists
+  if [ -h "${target}" ]; then
+    if [ "$(realpath -- "${target}")" = "$(realpath -- "${source}")" ]; then
+      info " File already symlink: $(fg_lightred)$(pwd)/${target}$(attr_reset)"
+    else
+      >&2 warn "Target already exists: $(pwd)/${target}"
+      >&2 warn "- New source: ${source}"
+      >&2 warn "- Old source: $(realpath -- "${source}")"
+    fi
+  elif [ -e "${target}" ]; then
+    >&2 warn "Nonlink target exists: $(pwd)/${target}"
+    >&2 warn "- For source: ${source}"
+  else
+    info " Created $(attr_emphasis)deep$(attr_reset) symlink $(fg_lightorange)$(pwd)/${target}$(attr_reset)"
+
+    /bin/ln -s "${source}" "${target}"
+  fi
 
   # `ln` happily makes symlink to non-existent target, which we
   # will allow (which is a Good Thing, e.g., `rg` complains on
