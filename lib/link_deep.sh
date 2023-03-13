@@ -31,7 +31,7 @@ remove_symlink_hierarchy_safe () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-deep_link () {
+link_deep () {
   local source="$1"
   local warn_cmd="${2:-echo}"
 
