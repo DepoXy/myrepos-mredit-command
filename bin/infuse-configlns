@@ -18,12 +18,6 @@ source_deps () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-remove_existing_links () {
-  find . -type l -exec /bin/rm {} +
-}
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-
 must_print_mrtrust_path () {
   local mrtrust_file="${HOME}/.mrtrust"
 
@@ -49,7 +43,7 @@ infuse_projects_links_omr_config () {
 
   echo "Creating links under $(pwd)…"
 
-  remove_existing_links
+  remove_symlink_hierarchy_safe
 
   # The ~/.mrconfig is inherently trusted and generally no included
   # in ~/.mrtrust

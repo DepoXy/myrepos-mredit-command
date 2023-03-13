@@ -8,6 +8,26 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+remove_symlink_hierarchy_safe () {
+  if [ -n "$(find . -maxdepth 1 ! -type l ! -type d)" ]; then
+    warn "Symlink hierarchy target exists but contains regular files"
+    warn "- Please inspect yourself and try again: $(pwd -L)"
+
+    # Triggers errexit.
+    return 1
+  fi
+
+  # Remove symlinks.
+  find . -type l -exec /bin/rm {} +
+
+  # Remove now-empty directories.
+  local subdir
+  find . ! -path . -type d | tac | while read -r subdir; do
+    /bin/rmdir "${subdir}"
+  done
+
+  return 0
+}
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
