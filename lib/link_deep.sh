@@ -39,9 +39,16 @@ link_deep () {
   local relative_dir
   local target
   if [ -z "${target}" ]; then
-    relative_dir="$(dirname -- "${source}" | sed 's#^/##')"
+    # If the source is under home, normalize the user home prefix,
+    # so implementations don't have to care what user is active
+    # (mostly useful for tailoring an .ignore file for the deep-link
+    # hierarchy).
+    relative_dir="$(echo "${source}" | sed "s#^${HOME}/#/home/user/#")"
 
-    # Make the symlink.
+    # Strip leading delimiter to make relative path.
+    relative_dir="$(dirname -- "${relative_dir}" | sed 's#^/##')"
+
+    # Determine the target path within the relative subdirectory.
     local target_file
     target_file="$(basename -- "${source}")"
 
