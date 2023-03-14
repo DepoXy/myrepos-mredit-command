@@ -77,7 +77,9 @@ link_deep () {
     >&2 warn "Nonlink target exists: $(pwd)/${target}"
     >&2 warn "- For source: ${source}"
   else
-    info " Created $(attr_emphasis)deep$(attr_reset) symlink $(fg_lightorange)$(pwd)/${target}$(attr_reset)"
+    info " $(fg_lightcyan)Created$(attr_reset)" \
+      "$(attr_emphasis)deep$(attr_reset) symlink" \
+      "$(fg_lightorange)$(pwd)/${target}$(attr_reset)"
 
     /bin/ln -s "${source}" "${target}"
   fi
