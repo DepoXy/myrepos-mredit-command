@@ -161,7 +161,7 @@ open_match_in_editor () {
   local file
   local row
   local col=0
-  file="$(echo "${match}" | jq -r '.data.path.text')"
+  file="$(echo "${match}" | jq -r '.data.path.text' | xargs realpath)"
   row="$(echo "${match}" | jq -r '.data.line_number')"
 
   if [ -z "${file}" ] || [ -z "${row}" ]; then
@@ -292,17 +292,44 @@ print_match () {
   local fmt_json=true
   local cmd_status
 
-  matches="$(rg_search "${pattpath}" "${targetp}" ${fmt_json})"
+  local matches_raw
+  matches_raw="$(rg_search "${pattpath}" "${targetp}" ${fmt_json})"
   cmd_status=$?
 
   [ ${cmd_status} -eq 0 ] || return 1
 
   local print_matches=false
 
+  local matches
+
+  # Cull duplicates by `realpath`'ing the results.
+
+  local match
+  local filepath
+  local filenames
+
+  while read match; do
+    [ "$(echo "${match}" | jq -r '.type')" = "match" ] || continue
+
+    filepath="$(echo "${match}" | jq -r '.data.path.text' --exit-status | xargs realpath)"
+
+    if ! echo "${filenames}" | grep -q -e "^${filepath}$"; then
+      filenames="${filenames}${filepath}"$'\n'
+      matches="${matches}${match}"$'\n'
+    fi
+  done <<< "${matches_raw}"
+
+  # Remove trailing blank line.
+  matches="$(echo "${matches}" | sed '/^$/d')"
+
   # Alert when multiple matches found.
 
   local n_matches
-  n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
+  # The `rg --json` reports total matches, e.g.,:
+  #   n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
+  # but that value might include duplicates (if you use symlinks to manage
+  # OMR config across different hosts, as the author does).
+  n_matches="$(echo "${matches}" | wc -l)"
   if [ ${n_matches} -gt 1 ]; then
     >&2 echo "Multiple matches found:"
     # DEV:
@@ -311,10 +338,9 @@ print_match () {
     print_matches=true
   fi
 
-  local match
   local final_match=""
-  local file
   local line
+  local file
   local index=0
 
   while read match; do
