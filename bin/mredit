@@ -299,6 +299,8 @@ print_match () {
 
   local print_matches=false
 
+  # Alert when multiple matches found.
+
   local n_matches
   n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
   if [ ${n_matches} -gt 1 ]; then
@@ -333,6 +335,8 @@ print_match () {
   if [ -n "${final_match}" ]; then
     capture_progress "${progr_f}" "  ** Matched!"
   fi
+
+  # Prompt user to pick a match.
 
   if ${print_matches}; then
     local picked
