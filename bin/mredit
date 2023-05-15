@@ -255,6 +255,10 @@ normal_path2mrconfig_path () {
 
   # Finally, correct home projects in general → use ${HOME}, not /home/user.
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}(/|$)#\\\\\$\\\\{HOME}\1#")"
+  # ")"
+  # ↑ KLUGE/2023-05-12: Weird syntax highlighting bug...
+  #   - I think from recent sh.vim update, ugh.
+  #   - It's the \ in the \1, what's up with that??                       ↑
 
   echo "${omr_path}"
 }
