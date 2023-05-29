@@ -35,6 +35,18 @@ link_deep () {
   local source="$1"
   local target="$2"
 
+  # Verify the source is complete path.
+  local source_valid=false
+  # COPYD: https://unix.stackexchange.com/a/256441/388857
+  case "${source}" in (/*) pathchk -- "${source}";; (*) ! : ;; esac \
+    && source_valid=true
+
+  if ! ${source_valid}; then
+    >&2 warn "Cannot link_deep relative path: ${source}"
+
+    return 1
+  fi
+
   # Build the hierarchy.
   local relative_dir
   local target
