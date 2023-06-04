@@ -112,8 +112,8 @@ link_deep () {
   else
     let 'INFUSE_SYMLINKS_NOK += 1'
 
-    >&2 warn "Phantom target symlinked: ${source}"
-    >&2 warn "- You'll see broken symlink at: $(pwd)/${target}"
+    >&2 warn "Phantom target symlinked:\n  ${source}"
+    >&2 warn "- You'll see broken symlink at:\n  $(pwd)/${target}"
   fi
 }
 
