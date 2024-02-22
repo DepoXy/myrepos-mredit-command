@@ -454,10 +454,16 @@ main () {
 
   create_progress_f
 
+  local cmd_status
+
   _mredit
-  [ $? -eq 0 ] || report_progress
+  [ ${cmd_status} -eq 0 ] \
+    || report_progress
 
   cleanup_progress_f
+
+  [ ${cmd_status} -eq 0 ] \
+    || return ${cmd_status}
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
