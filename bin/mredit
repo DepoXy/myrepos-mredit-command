@@ -98,9 +98,11 @@ _mredit () {
 
   # If nothing found, try a second time with absolute project root path.
   if [ ${cmd_status} -ne 0 ]; then
-    try_path="$(git_project_root_absolute)"
+    local abs_path="$(git_project_root_absolute)"
 
-    find_and_open_match "${try_path}"
+    if [ "${abs_path}" != "${try_path}" ]; then
+      find_and_open_match "${abs_path}"
+    fi
 
     # If nothing found again or absolute path the same, cd up per
     # --show-cdup and get the path (which probably isn't what you
@@ -109,9 +111,11 @@ _mredit () {
     # link to `pwd` will likely not be the project user is trying
     # to `mredit`/`mropen`).
     if [ ${cmd_status} -ne 0 ]; then
-      try_path="$(git_project_root_relative)"
+      local rel_path="$(git_project_root_relative)"
 
-      find_and_open_match "${try_path}"
+      if [ "${rel_path}" != "${try_path}" ] && [ "${rel_path}" != "${abs_path}" ]; then
+        find_and_open_match "${rel_path}"
+      fi
     fi
   fi
 }
