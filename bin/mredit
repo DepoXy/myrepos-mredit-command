@@ -286,7 +286,7 @@ print_match () {
   pattpath="(\\\$\\{[A-Z_]+:-)*${pattpath}"
   # - Ignore final } in }]
   pattpath="${pattpath}\\}?"
-  # - Final, add the `^\[` prefix and `]` suffix.
+  # - Finally, add the `^\[` prefix and `]` suffix.
   pattpath="^\\[${pattpath}]"
 
   capture_progress "${progr_f}" "Searching candidate:" \
