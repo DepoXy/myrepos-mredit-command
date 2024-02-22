@@ -125,9 +125,8 @@ _mredit () {
 find_and_open_match () {
   local try_path="$1"
 
-  local omr_path
-
   # Normalize the search path.
+  local omr_path
   omr_path="$(normal_path2mrconfig_path "${try_path}")"
 
   # Look for `^[{path}]` pattern matches.
