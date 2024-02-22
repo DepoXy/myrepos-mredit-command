@@ -96,15 +96,18 @@ _mredit () {
 
   find_and_open_match "${try_path}"
 
-  # If nothing found, try a third time with project root path,
-  # using same relative directory if under symlink.
+  # If nothing found, try a second time with absolute project root path.
   if [ ${cmd_status} -ne 0 ]; then
     try_path="$(git_project_root_absolute)"
 
     find_and_open_match "${try_path}"
 
-    # Finally, if nothing found, try a final time with absolute
-    # project root path.
+    # If nothing found again or absolute path the same, cd up per
+    # --show-cdup and get the path (which probably isn't what you
+    # desire; if under a symlink to a different repo, --show-cdup
+    # is relative to that other repo, so `cd`'ing up from the sym-
+    # link to `pwd` will likely not be the project user is trying
+    # to `mredit`/`mropen`).
     if [ ${cmd_status} -ne 0 ]; then
       try_path="$(git_project_root_relative)"
 
