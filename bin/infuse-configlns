@@ -24,7 +24,7 @@ source_dep () {
   local dep_path="$1"
 
   local project_root
-  project_root="$(dirname "$(realpath "$0")")/.."
+  project_root="$(dirname -- "$(realpath -- "$0")")/.."
 
   local dep_path="${project_root}/${dep_path}"
 

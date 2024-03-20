@@ -24,7 +24,7 @@ install:
 	@echo "... installing bins to $(DESTDIR)$(BINPREFIX)"
 	@$(foreach BIN, $(BINS), \
 		echo "  ... symlinking $(DESTDIR)$(BINPREFIX)/$(notdir $(BIN))"; \
-		ln -sfn "$$(realpath $(BIN))" "$(DESTDIR)$(BINPREFIX)/"; \
+		ln -sfn "$$(realpath -- $(BIN))" "$(DESTDIR)$(BINPREFIX)/"; \
 	)
 
 uninstall:
