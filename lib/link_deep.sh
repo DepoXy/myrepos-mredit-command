@@ -23,7 +23,7 @@ remove_symlink_hierarchy_safe () {
   # Remove now-empty directories.
   local subdir
   find . ! -path . -type d | tac | while read -r subdir; do
-    /bin/rmdir "${subdir}"
+    rmdir -- "${subdir}"
   done
 
   return 0
