@@ -214,7 +214,7 @@ create_progress_f () {
 cleanup_progress_f () {
   [ -e "${MREDIT_PROG_F}" ] || return 0
 
-  /bin/rm -f "${MREDIT_PROG_F}"
+  command rm -f "${MREDIT_PROG_F}"
 }
 
 capture_progress () {
