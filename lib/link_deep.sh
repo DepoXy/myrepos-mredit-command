@@ -18,7 +18,7 @@ remove_symlink_hierarchy_safe () {
   fi
 
   # Remove symlinks.
-  find . -type l -exec /bin/rm {} +
+  find . -type l -exec rm {} +
 
   # Remove now-empty directories.
   local subdir
