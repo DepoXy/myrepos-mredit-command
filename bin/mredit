@@ -151,7 +151,36 @@ find_and_open_match () {
     fi
   fi
 
+  local sect_cfg=""
+
   if [ ${cmd_status} -ne 0 ]; then
+    # See if `mr` has MR_SECTION_CONFIG environ (and if
+    # user's mrconfig calls `mr_cat` instead of just `cat`).
+    local mr_output
+    if mr_output="$(mr -d . -n run sh -c 'echo "$MR_SECTION_CONFIG"')"; then
+      sect_cfg="$(echo "${mr_output}" | head -n 1)"
+      if [ -n "${sect_cfg}" ]; then
+        echo "Found config via MR_SECTION_CONFIG: ${sect_cfg}"
+
+        print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}"
+
+        match="$(print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}")"
+        cmd_status=$?
+      fi
+    fi
+  fi
+
+  if [ ${cmd_status} -ne 0 ]; then
+    if [ -f "${sect_cfg}" ]; then
+      >&2 echo "Found closest config, but no line number"
+      # E.g., perhaps 'include = cat <<EOF'-like call generated project
+      # config at runtime without explicit '[/path/to/project]' in conf.
+
+      open_file_in_editor "${sect_cfg}" "" "" ${MREDIT_USE_GVIM}
+
+      return 0
+    fi
+
     return ${cmd_status}
   fi
 
@@ -180,8 +209,21 @@ open_match_in_editor () {
     return 1
   fi
 
+  open_file_in_editor "${file}" "${row}" "${col}" "${use_gvim}"
+}
+
+open_file_in_editor () {
+  local file="$1"
+  local row="$2"
+  local col="$3"
+  local use_gvim=$4
+
   if ! ${use_gvim}; then
-    vim -c "call cursor(${row}, ${col})" "${file}"
+    if [ -n "${row}" ] && [ -n "${col}" ]; then
+      vim -c "call cursor(${row}, ${col})" "${file}"
+    else
+      vim "${file}"
+    fi
   else
     if check_dep_gvim_open_kindness; then
       gvim-open-kindness "" "${row}" "${col}" "${file}"
@@ -191,7 +233,9 @@ open_match_in_editor () {
         servername="--servername ${GVIM_OPEN_SERVERNAME:-SAMPI}"
       fi
       gvim ${servername} --remote-silent "$(echo "${file}" | sed "s/^b//")"
-      gvim ${servername} --remote-send "<ESC>:call cursor("${row}", "${col}")<CR>"
+      if [ -n "${row}" ] && [ -n "${col}" ]; then
+        gvim ${servername} --remote-send "<ESC>:call cursor("${row}", "${col}")<CR>"
+      fi
       # Show user hint on using gvim-open-kindness.
       if ${MREDIT_KINDNESS_HINT_DISABLE:-false}; then
         local gvok_url="https://github.com/DepoXy/gvim-open-kindness#🐬"
