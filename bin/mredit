@@ -129,12 +129,13 @@ find_and_open_match () {
   local omr_path
   omr_path="$(normal_path2mrconfig_path "${try_path}")"
 
-  # Look for `^[{path}]` pattern matches.
   local match
+  # Look for `^[{path}]` pattern matches.
   match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
   cmd_status=$?
 
   # print_match was called in a $(subshell) so exit on special return code.
+  # - See `return 11`: Means user was prompted and refused to pick.
   [ ${cmd_status} -eq 11 ] && exit 1
 
   # If nothing found, try again with the absolute path.
