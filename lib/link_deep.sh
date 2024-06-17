@@ -108,9 +108,11 @@ link_deep () {
   # broken links, which'll alert user to the problem). But we'll
   # also check ourselves, to be proactive.
   if [ -e "${source}" ]; then
-    let 'INFUSE_SYMLINKS_CNT += 1'
+    # Not POSIX: let 'INFUSE_SYMLINKS_CNT += 1'
+    INFUSE_SYMLINKS_CNT="$((${INFUSE_SYMLINKS_CNT:-0} + 1))"
   else
-    let 'INFUSE_SYMLINKS_NOK += 1'
+    # Not POSIX: let 'INFUSE_SYMLINKS_NOK += 1'
+    INFUSE_SYMLINKS_NOK="$((${INFUSE_SYMLINKS_NOK:-0} + 1))"
 
     >&2 warn "Phantom target symlinked:\n  ${source}"
     >&2 warn "- You'll see broken symlink at:\n  $(pwd)/${target}"
