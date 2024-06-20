@@ -10,6 +10,8 @@
 
 MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
 
+MREDIT_VERBOSE=${MREDIT_VERBOSE:-false}
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 check_deps () {
@@ -502,7 +504,8 @@ main () {
   local cmd_status
 
   _mredit
-  [ ${cmd_status} -eq 0 ] \
+  ( [ ${cmd_status} -eq 0 ] \
+    && ! ${MREDIT_VERBOSE:-false} ] ) \
     || report_progress
 
   cleanup_progress_f
