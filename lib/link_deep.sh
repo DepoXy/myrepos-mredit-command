@@ -6,6 +6,16 @@
 
 # Copyright (c) © 2020-2023 Landon Bouma. All Rights Reserved.
 
+# USAGE: Set an alternative deep-link prefix.
+# - E.g., if you deep-link ~/foo/bar/baz to ~/bat, link_deep
+#   will use the user's home path by default, e.g.,
+#     # Linux
+#     ~/bat/home/<user>/foo/bar/baz
+#     # macOS
+#     ~/bat/Users/<user>/foo/bar/baz
+# Set LINK_DEEP_SUB_HOME to choose your own substitution.
+LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 remove_symlink_hierarchy_safe () {
@@ -55,7 +65,7 @@ link_deep () {
     # so implementations don't have to care what user is active
     # (mostly useful for tailoring an .ignore file for the deep-link
     # hierarchy).
-    relative_dir="$(echo "${source}" | sed "s#^${HOME}/#/home/user/#")"
+    relative_dir="$(echo "${source}" | sed "s#^${HOME}/#${LINK_DEEP_SUB_HOME}/#")"
 
     # Strip leading delimiter to make relative path.
     relative_dir="$(dirname -- "${relative_dir}" | sed 's#^/##')"
