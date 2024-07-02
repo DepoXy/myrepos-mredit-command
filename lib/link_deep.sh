@@ -19,20 +19,25 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 remove_symlink_hierarchy_safe () {
-  if [ -n "$(find . ! -type l ! -type d -print -quit)" ]; then
+  local target="${1:-.}"
+
+  if [ -n "$(find "${target}" ! -type l ! -type d -print -quit)" ]; then
+    local cwd=""
+    [ "${target#/}" = "${target}" ] || cwd=" [from $(pwd -L)]"
+
     warn "Symlink hierarchy target exists but contains regular files"
-    warn "- Please inspect yourself and try again: $(pwd -L)"
+    warn "- Please inspect yourself and try again: ${target}${cwd}"
 
     # Triggers errexit.
     return 1
   fi
 
   # Remove symlinks.
-  find . -type l -exec rm {} +
+  find "${target}" -type l -exec rm {} +
 
   # Remove now-empty directories.
   local subdir
-  find . ! -path . -type d | tac | while read -r subdir; do
+  find "${target}" ! -path "${target}" -type d | tac | while read -r subdir; do
     rmdir -- "${subdir}"
   done
 
