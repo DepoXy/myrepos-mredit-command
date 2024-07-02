@@ -19,7 +19,7 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 remove_symlink_hierarchy_safe () {
-  if [ -n "$(find . ! -type l ! -type d)" ]; then
+  if [ -n "$(find . ! -type l ! -type d -print -quit)" ]; then
     warn "Symlink hierarchy target exists but contains regular files"
     warn "- Please inspect yourself and try again: $(pwd -L)"
 
