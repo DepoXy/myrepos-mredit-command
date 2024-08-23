@@ -391,7 +391,7 @@ print_match () {
     print_matches=true
   fi
 
-  local final_match=""
+  local picked_match=""
   local line
   local file
   local index=0
@@ -408,10 +408,10 @@ print_match () {
       >&2 echo "[${index}]: ${file}:${line}"
     fi
 
-    final_match="${match}"
+    picked_match="${match}"
   done <<< "${matches}"
 
-  if [ -n "${final_match}" ]; then
+  if [ -n "${picked_match}" ]; then
     capture_progress "${progr_f}" "  ** Matched!"
   fi
 
@@ -424,7 +424,7 @@ print_match () {
 
     read picked
 
-    final_match=""
+    picked_match=""
     index=0
     while read match; do
       line="$(echo "${match}" | jq -r '.data.line_number' --exit-status)"
@@ -432,22 +432,22 @@ print_match () {
 
       let 'index += 1'
       if [ ${index} -eq ${picked} ]; then
-        final_match="${match}"
+        picked_match="${match}"
 
         break
       fi
     done <<< "${matches}"
 
-    if [ -z "${final_match}" ]; then
+    if [ -z "${picked_match}" ]; then
       >&2 echo "Nothing picked!"
 
       return 11
     fi
   fi
 
-  [ -n "${final_match}" ] || return 1
+  [ -n "${picked_match}" ] || return 1
 
-  echo "${final_match}"
+  echo "${picked_match}"
 }
 
 # ***
