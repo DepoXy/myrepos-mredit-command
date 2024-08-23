@@ -373,9 +373,6 @@ print_match () {
   # Remove trailing blank line.
   matches="$(echo "${matches}" | sed '/^$/d')"
 
-  # Alert when multiple matches found.
-  local show_match_picker=false
-
   local n_matches
   # The `rg --json` reports total matches, e.g.,:
   #   n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
@@ -386,11 +383,36 @@ print_match () {
     >&2 echo "Multiple matches found:"
     # DEV:
     #   >&2 rg_search "${pattpath}" "${targetp}" false
-
-    show_match_picker=true
   fi
 
+  # The identify_auto_match_and_print_if_multiple_matches
+  # command sets the following locals.
+  #
+  # Prompt when multiple matches found...
+  local show_match_picker=false
   local picked_match=""
+  identify_auto_match_and_print_if_multiple_matches "${matches}" "${n_matches}"
+
+  if [ -n "${picked_match}" ]; then
+    capture_progress "${progr_f}" "  ** Matched!"
+  fi
+
+  # Prompt user to pick a match.
+
+  if ${show_match_picker}; then
+    picked_match="$(prompt_user_pick_match "${matches}")" \
+      || return $?
+  fi
+
+  [ -n "${picked_match}" ] || return 1
+
+  echo "${picked_match}"
+}
+
+identify_auto_match_and_print_if_multiple_matches () {
+  local matches="$1"
+  local n_matches="$2"
+
   local line
   local file
   local index=0
@@ -409,21 +431,6 @@ print_match () {
 
     picked_match="${match}"
   done <<< "${matches}"
-
-  if [ -n "${picked_match}" ]; then
-    capture_progress "${progr_f}" "  ** Matched!"
-  fi
-
-  # Prompt user to pick a match.
-
-  if ${show_match_picker}; then
-    picked_match="$(prompt_user_pick_match "${matches}")" \
-      || return $?
-  fi
-
-  [ -n "${picked_match}" ] || return 1
-
-  echo "${picked_match}"
 }
 
 prompt_user_pick_match () {
