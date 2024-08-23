@@ -417,36 +417,46 @@ print_match () {
   # Prompt user to pick a match.
 
   if ${show_match_picker}; then
-    local user_input
-
-    >&2 printf "Please pick a match: "
-
-    read user_input
-
-    picked_match=""
-    index=0
-    while read match; do
-      line="$(echo "${match}" | jq -r '.data.line_number' --exit-status)"
-      [ $? -eq 0 ] || continue
-
-      let 'index += 1'
-      if [ ${index} -eq ${user_input} ]; then
-        picked_match="${match}"
-
-        break
-      fi
-    done <<< "${matches}"
-
-    if [ -z "${picked_match}" ]; then
-      >&2 echo "Nothing picked!"
-
-      return 11
-    fi
+    picked_match="$(prompt_user_pick_match "${matches}")" \
+      || return $?
   fi
 
   [ -n "${picked_match}" ] || return 1
 
   echo "${picked_match}"
+}
+
+prompt_user_pick_match () {
+  local matches="$1"
+
+  local picked_match=""
+  local user_input
+
+  >&2 printf "Please pick a match: "
+
+  read user_input
+
+  local line
+  local index=0
+  while read match; do
+    line="$(echo "${match}" | jq -r '.data.line_number' --exit-status)"
+    [ $? -eq 0 ] || continue
+
+    let 'index += 1'
+    if [ ${index} -eq ${user_input} ]; then
+      picked_match="${match}"
+
+      break
+    fi
+  done <<< "${matches}"
+
+  if [ -z "${picked_match}" ]; then
+    >&2 echo "Nothing picked!"
+
+    return 11
+  fi
+
+  printf "%s" "${picked_match}"
 }
 
 # ***
