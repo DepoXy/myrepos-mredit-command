@@ -261,7 +261,7 @@ create_progress_f () {
 cleanup_progress_f () {
   [ -e "${MREDIT_PROG_F}" ] || return 0
 
-  command rm -f "${MREDIT_PROG_F}"
+  command rm -f -- "${MREDIT_PROG_F}"
 }
 
 capture_progress () {
@@ -280,7 +280,7 @@ capture_progress () {
 report_progress () {
   [ -e "${MREDIT_PROG_F}" ] || return 0
  
-  >&2 cat "${MREDIT_PROG_F}"
+  >&2 cat -- "${MREDIT_PROG_F}"
 }
 
 # ***
