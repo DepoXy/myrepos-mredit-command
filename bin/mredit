@@ -417,11 +417,11 @@ print_match () {
   # Prompt user to pick a match.
 
   if ${show_match_picker}; then
-    local picked
+    local user_input
 
     >&2 printf "Please pick a match: "
 
-    read picked
+    read user_input
 
     picked_match=""
     index=0
@@ -430,7 +430,7 @@ print_match () {
       [ $? -eq 0 ] || continue
 
       let 'index += 1'
-      if [ ${index} -eq ${picked} ]; then
+      if [ ${index} -eq ${user_input} ]; then
         picked_match="${match}"
 
         break
