@@ -351,8 +351,6 @@ print_match () {
 
   [ ${cmd_status} -eq 0 ] || return 1
 
-  local print_matches=false
-
   local matches
 
   # Cull duplicates by `realpath`'ing the results.
@@ -376,6 +374,7 @@ print_match () {
   matches="$(echo "${matches}" | sed '/^$/d')"
 
   # Alert when multiple matches found.
+  local show_match_picker=false
 
   local n_matches
   # The `rg --json` reports total matches, e.g.,:
@@ -388,7 +387,7 @@ print_match () {
     # DEV:
     #   >&2 rg_search "${pattpath}" "${targetp}" false
 
-    print_matches=true
+    show_match_picker=true
   fi
 
   local picked_match=""
@@ -402,7 +401,7 @@ print_match () {
 
     file="$(echo "${match}" | jq -r '.data.path.text' --exit-status)"
 
-    if ${print_matches}; then
+    if ${show_match_picker}; then
       let 'index += 1'
 
       >&2 echo "[${index}]: ${file}:${line}"
@@ -417,7 +416,7 @@ print_match () {
 
   # Prompt user to pick a match.
 
-  if ${print_matches}; then
+  if ${show_match_picker}; then
     local picked
 
     >&2 printf "Please pick a match: "
