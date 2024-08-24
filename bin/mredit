@@ -373,6 +373,18 @@ print_match () {
   # Remove trailing blank line.
   matches="$(echo "${matches}" | sed '/^$/d')"
 
+  # The identify_auto_match_and_print_if_multiple_matches
+  # command sets the following locals.
+  #
+  # Prompt when multiple matches found...
+  local show_match_picker=false
+  # ... unless user uses MREDIT_AUTO_MATCH=false to exclude
+  #     all configs except one, in which case auto-pick the
+  #     config that wasn't excluded.
+  local picked_match=""
+  local picked_index=1
+  local picked_file=""
+
   local n_matches
   # The `rg --json` reports total matches, e.g.,:
   #   n_matches="$(echo "${matches}" | tail -1 | jq -r '.data.stats.matches')"
@@ -383,14 +395,12 @@ print_match () {
     >&2 echo "Multiple matches found:"
     # DEV:
     #   >&2 rg_search "${pattpath}" "${targetp}" false
+    
+    if "${MREDIT_DISABLE_AUTO_MATCH:-false}"; then
+      show_match_picker=true
+    fi
   fi
 
-  # The identify_auto_match_and_print_if_multiple_matches
-  # command sets the following locals.
-  #
-  # Prompt when multiple matches found...
-  local show_match_picker=false
-  local picked_match=""
   identify_auto_match_and_print_if_multiple_matches "${matches}" "${n_matches}"
 
   if [ -n "${picked_match}" ]; then
@@ -399,15 +409,36 @@ print_match () {
 
   # Prompt user to pick a match.
 
-  if ${show_match_picker}; then
-    picked_match="$(prompt_user_pick_match "${matches}")" \
+  if ${show_match_picker} || [ -z "${picked_match}" ]; then
+    picked_match="$(prompt_user_pick_match "${matches}" "${picked_index}")" \
       || return $?
+  elif [ ${n_matches} -gt 1 ]; then
+    >&2 echo "Auto-picked [${picked_index}]: ${picked_file}"
+    >&2 echo "- If you want to be prompted, use the --prompt option, e.g.:"
+    >&2 echo "    $(basename -- "$0") --prompt"
   fi
 
   [ -n "${picked_match}" ] || return 1
 
   echo "${picked_match}"
 }
+
+# Sets via `local` upward scoping:
+# - If multiple matches and one cannot be auto-picked, sets
+#     show_match_picker=true
+# - Sets the picked_* vars to the first match from a config that
+#   does not use the  magic string to opt-out of being auto-picked:
+#     lib = MREDIT_AUTO_MATCH=false
+#   - Use case: If user has private mrconfig that overrides/complements
+#     config from another project, some projects might have multiple
+#     definitions. If the user generally wants to see the project
+#     config and not the typically trivial private config, they
+#     can add `lib = MREDIT_AUTO_MATCH=false` to the private config
+#     so that it will not be auto-picked here.
+#   The selected match is used to set these variables:
+#     picked_match=<JSON>
+#     picked_index=<1-based index>
+#     picked_file=<path>
 
 identify_auto_match_and_print_if_multiple_matches () {
   local matches="$1"
@@ -423,25 +454,39 @@ identify_auto_match_and_print_if_multiple_matches () {
 
     file="$(echo "${match}" | jq -r '.data.path.text' --exit-status)"
 
-    if ${show_match_picker}; then
-      let 'index += 1'
-
+    let 'index += 1'
+    if [ ${n_matches} -gt 1 ]; then
       >&2 echo "[${index}]: ${file}:${line}"
     fi
 
-    picked_match="${match}"
+    # USAGE: If file includes magic string, exclude from auto-pick:
+    #   lib = MREDIT_AUTO_MATCH=false
+    if ! grep -q -e "^lib = MREDIT_AUTO_MATCH=false[[:space:]]*$" "${file}"; then
+      if [ -z "${picked_match}" ]; then
+        picked_match="${match}"
+        picked_index="${index}"
+        picked_file="${file}"
+      else
+        show_match_picker=true
+      fi
+    fi
   done <<< "${matches}"
 }
 
 prompt_user_pick_match () {
   local matches="$1"
+  local picked_index="$2"
 
   local picked_match=""
   local user_input
 
-  >&2 printf "Please pick a match: "
+  >&2 printf "Please pick a match [${picked_index}]: "
 
   read user_input
+
+  if [ -z "${user_input}" ]; then
+    user_input="${picked_index}"
+  fi
 
   local line
   local index=0
@@ -491,13 +536,19 @@ rg_search () {
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
 
-MREDIT_USE_GVIM=false
+MREDIT_USE_GVIM=${MREDIT_USE_GVIM:-false}
+MREDIT_DISABLE_AUTO_MATCH=${MREDIT_DISABLE_AUTO_MATCH:-false}
 
 parse_args () {
   while [ "$1" != '' ]; do
     case $1 in
       -g | --gvim | gvim)
         MREDIT_USE_GVIM=true
+
+        shift
+        ;;
+      -p | --prompt | prompt)
+        MREDIT_DISABLE_AUTO_MATCH=true
 
         shift
         ;;
