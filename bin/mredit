@@ -415,7 +415,7 @@ print_match () {
   elif [ ${n_matches} -gt 1 ]; then
     >&2 echo "Auto-picked [${picked_index}]: ${picked_file}"
     >&2 echo "- If you want to be prompted, use the --prompt option, e.g.:"
-    >&2 echo "    $(basename -- "$0") --prompt"
+    >&2 echo "    $(basename -- "$0") -p"
   fi
 
   [ -n "${picked_match}" ] || return 1
