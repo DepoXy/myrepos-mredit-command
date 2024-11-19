@@ -23,7 +23,7 @@ remove_symlink_hierarchy_safe () {
 
   if [ -n "$(find "${target}" ! -type l ! -type d -print -quit)" ]; then
     local cwd=""
-    [ "${target#/}" = "${target}" ] || cwd=" [from $(pwd -L)]"
+    [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd -L)]"
 
     warn "Symlink hierarchy target exists but contains regular files"
     warn "- Please inspect yourself and try again: ${target}${cwd}"
