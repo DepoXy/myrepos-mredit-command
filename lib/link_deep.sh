@@ -115,7 +115,7 @@ link_deep () {
       "$(attr_emphasis)deep$(attr_reset) symlink" \
       "$(fg_lightorange)$(pwd)/${target}$(attr_reset)"
 
-    /bin/ln -s "${source}" "${target}"
+    command ln -s -- "${source}" "${target}"
   fi
 
   # `ln` happily makes symlink to non-existent target, which we
