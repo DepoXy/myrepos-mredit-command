@@ -220,11 +220,18 @@ open_file_in_editor () {
   local col="$3"
   local use_gvim=$4
 
+  local editor="${EDITOR:-vim}"
+
+  looks_vimish () { echo "${editor}" | grep -q "vim"; }
+
   if ! ${use_gvim}; then
-    if [ -n "${row}" ] && [ -n "${col}" ]; then
-      vim -c "call cursor(${row}, ${col})" "${file}"
+    if looks_vimish \
+      && [ -n "${row}" ] \
+      && [ -n "${col}" ] \
+    ; then
+      ${editor} -c "call cursor(${row}, ${col})" "${file}"
     else
-      vim "${file}"
+      ${editor} "${file}"
     fi
   else
     if check_dep_gvim_open_kindness; then
