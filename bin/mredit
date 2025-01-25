@@ -228,6 +228,9 @@ open_file_in_editor () {
     fi
   else
     if check_dep_gvim_open_kindness; then
+      # CXREF: Runs gvim or nvim (latter if GVIM_OPEN_PREFER_NVIM=true).
+      # - If running a DepoXy environ, found locally at:
+      #   ~/.kit/sh/gvim-open-kindness/bin/gvim-open-kindness
       gvim-open-kindness "" "${row}" "${col}" "${file}"
     else
       local servername=""
