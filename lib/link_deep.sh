@@ -21,7 +21,9 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 remove_symlink_hierarchy_safe () {
   local target="${1:-.}"
 
-  if [ -n "$(find "${target}" ! -type l ! -type d -print -quit)" ]; then
+  if [ -n "$( \
+    find "${target}" ! -type l ! -type d -print -quit \
+  )" ]; then
     local cwd=""
     [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd -L)]"
 
