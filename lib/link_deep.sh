@@ -22,7 +22,7 @@ remove_symlink_hierarchy_safe () {
   local target="${1:-.}"
 
   if [ -n "$( \
-    find "${target}" ! -type l ! -type d -print -quit \
+    find "${target}" ! -type l ! -type d ! -name ".DS_Store" -print -quit \
   )" ]; then
     local cwd=""
     [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd -L)]"
