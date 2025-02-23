@@ -153,6 +153,20 @@ find_and_open_match () {
     fi
   fi
 
+  # If nothing found, try again with the trailing path.
+  if [ ${cmd_status} -ne 0 ]; then
+    # Look for projects that end with `{tail}]`.
+    local bname="$(basename -- "${try_path}")"
+
+    local sub_pattern="(.+\\/)?${bname}"
+
+    match="$( \
+      print_match \
+        "${sub_pattern}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}" ${_braceless:-true}
+    )"
+    cmd_status=$?
+  fi
+
   local sect_cfg=""
 
   if [ ${cmd_status} -ne 0 ]; then
@@ -332,17 +346,20 @@ print_match () {
   local rawpath="$1"
   local targetp="$2"
   local progr_f="$3"
+  local braceless="${4:-false}"
 
   # Note that a common OMR path strategy is to use an environment
   # prefix, e.g., `[${MY_WORK:-${HOME}/work}/path/to/project]`,
   # which we can easily (well, regex-easily) accommodate.
-  local pattpath
-  # - First add optional `}?` before each path separator.
-  pattpath="$(echo "${rawpath}" | sed -E "s#/#\\\\}?/#g")"
-  # - Then add a pattern to ignore the prefix `${ENVIRON:-`.
-  pattpath="(\\\$\\{[A-Z_]+:-)*${pattpath}"
-  # - Ignore final } in }]
-  pattpath="${pattpath}\\}?"
+  local pattpath="${rawpath}"
+  if ! ${braceless}; then
+    # - First add optional `}?` before each path separator.
+    pattpath="$(echo "${rawpath}" | sed -E "s#/#\\\\}?/#g")"
+    # - Then add a pattern to ignore the prefix `${ENVIRON:-`.
+    pattpath="(\\\$\\{[A-Z_]+:-)*${pattpath}"
+    # - Ignore final } in }]
+    pattpath="${pattpath}\\}?"
+  fi
   # - Finally, add the `^\[` prefix and `]` suffix.
   pattpath="^\\[${pattpath}]"
 
