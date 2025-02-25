@@ -325,7 +325,7 @@ normal_path2mrconfig_path () {
   # FIXME/2023-02-27: Decouple these translations.
   #
   # Correct for ~/.vim/.mrconfigs, whose projects are relative, e.g.,:
-  #   [pack/landonb/start/dubs_edit_juice]
+  #   [pack/landonb/dubs_edit_juice]
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.vim/##")"
   # Same for .gopath projects:
   omr_path="$(echo "${omr_path}" | sed -E "s#${HOME}/.gopath/##")"
