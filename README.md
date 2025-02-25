@@ -70,19 +70,25 @@ mredit — Locate and edit myrepos config fastly 🧜
 
   - You can clone and install `gvim-open-kindness` from sources:
 
-    https://github.com/DepoXy/gvim-open-kindness#🐬
+    https://github.com/DepoXy/gvim-open-kindness 🐬
 
   - The `gvim-open-kindness` command adds a few niceties, such
-    as fronting GVim after opening the file (macOS and MATE).
+    as fronting the Neovim, Neovide, or GVim window after opening
+    the file (for macOS and X Windows; Wayland support coming).
 
-  - If `gvim-open-kindness` is not installed, you will have to
-    to manually switch to the GVim app if the opened file is
-    sent to an existing GVim instance.
+  - If `gvim-open-kindness` is not installed, the command will
+    fallback to looking for a GVim instance. Then you would have
+    to manually switch to GVim if the opened file is sent to a
+    running instance.
 
-  Whether or not you install `gvim-open-kindness`, you can use the
-  `GVIM_OPEN_SERVERNAME` environ to set the GVim `--servername`, e.g.,:
+  - Whether or not you install `gvim-open-kindness`, you can use
+    the `GVIM_OPEN_SERVERNAME` environ to set the GVim `--servername`,
+    e.g.,:
 
       GVIM_OPEN_SERVERNAME="my-gvim-server" mropen
+
+    (But if you enjoy using Neovim or Neovide, consider installing
+    `gvim-open-kindness` for a Neovim-friendly `mropen` command.)
 
 ## PREREQUISITES
 
