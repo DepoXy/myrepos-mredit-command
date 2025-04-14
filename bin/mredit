@@ -12,6 +12,8 @@ MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
 
 MREDIT_VERBOSE=${MREDIT_VERBOSE:-false}
 
+match_loosely=true
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 check_deps() {
@@ -141,31 +143,33 @@ find_and_open_match() {
   # - See `return 11`: Means user was prompted and refused to pick.
   [ ${cmd_status} -eq 11 ] && exit 1
 
-  # If nothing found, try again with the absolute path.
-  if [ ${cmd_status} -ne 0 ]; then
+  if ! ${match_loosely}; then
+    # If nothing found, try again with the absolute path.
+    if [ ${cmd_status} -ne 0 ]; then
 
-    local abs_path="$(realpath -- "${try_path}")"
+      local abs_path="$(realpath -- "${try_path}")"
 
-    if [ "${abs_path}" != "${try_path}" ]; then
-      omr_path="$(normal_path2mrconfig_path "${abs_path}")"
+      if [ "${abs_path}" != "${try_path}" ]; then
+        omr_path="$(normal_path2mrconfig_path "${abs_path}")"
 
-      match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
+        match="$(print_match "${omr_path}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}")"
+        cmd_status=$?
+      fi
+    fi
+
+    # If nothing found, try again with the trailing path.
+    if [ ${cmd_status} -ne 0 ]; then
+      # Look for projects that end with `{tail}]`.
+      local bname="$(basename -- "${try_path}")"
+
+      local sub_pattern="(.+\\/)?${bname}"
+
+      match="$(
+        print_match \
+          "${sub_pattern}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}" ${_braceless:-true}
+      )"
       cmd_status=$?
     fi
-  fi
-
-  # If nothing found, try again with the trailing path.
-  if [ ${cmd_status} -ne 0 ]; then
-    # Look for projects that end with `{tail}]`.
-    local bname="$(basename -- "${try_path}")"
-
-    local sub_pattern="(.+\\/)?${bname}"
-
-    match="$(
-      print_match \
-        "${sub_pattern}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}" ${_braceless:-true}
-    )"
-    cmd_status=$?
   fi
 
   local sect_cfg=""
@@ -360,6 +364,26 @@ print_match() {
     pattpath="(\\\$\\{[A-Z_]+:-)*${pattpath}"
     # - Ignore final } in }]
     pattpath="${pattpath}\\}?"
+  fi
+  # Wrap search with `^\[` prefix and `]` suffix.
+  if ${match_loosely}; then
+    # Add very loosely matching trailing directory name.
+    # - UCASE: Author has some OMR that use relative paths, e.g.,
+    #     [landonb/nvim-lazyb]
+    #   But I also have a separate private config for the same
+    #   project that uses a full path, e.g.,
+    #     [${MR_HOME:-${HOME}}/.kit/nvim/landonb/nvim-lazyb]
+    # MAYBE: Note this approach may match irrelevant projects,
+    # if disparate projects share the same directory name.
+    # - So maybe make match_loosely opt-in via CLI arg., vs.
+    #   how it's currently enabled, via hardcoded feature flag
+    #   atop this file.
+    # MAYBE: Also note the complicate ${pattpath} built above
+    # is essentially pointless now, and all we really need is
+    # the new ${sub_pattern} regex.
+    local bname="$(basename -- "${rawpath}")"
+    local sub_pattern="(.+\\/)?${bname}"
+    pattpath="(${pattpath}|${sub_pattern})"
   fi
   # - Finally, add the `^\[` prefix and `]` suffix.
   pattpath="^\\[${pattpath}]"
