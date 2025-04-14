@@ -489,7 +489,10 @@ identify_auto_match_and_print_if_multiple_matches() {
 
     # USAGE: If file includes magic string, exclude from auto-pick:
     #   lib = MREDIT_AUTO_MATCH=false
-    if ! grep -q -e "^lib = MREDIT_AUTO_MATCH=false[[:space:]]*$" "${file}"; then
+    if [ ${n_matches} -eq 1 ] ||
+      ! grep -q -e "^lib = MREDIT_AUTO_MATCH=false[[:space:]]*$" "${file}" \
+      ; then
+
       if [ -z "${picked_match}" ]; then
         picked_match="${match}"
         picked_index="${index}"
