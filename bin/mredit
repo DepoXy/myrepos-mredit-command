@@ -14,7 +14,7 @@ MREDIT_VERBOSE=${MREDIT_VERBOSE:-false}
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-check_deps () {
+check_deps() {
   local failed=false
 
   check_dep_jq || failed=true
@@ -29,71 +29,72 @@ check_deps () {
 
 # ***
 
-check_dep_jq () {
-  hint_install_deb () { >&2 echo "  sudo apt-get install jq"; }
-  hint_install_brew () { >&2 echo "  brew install jq"; }
+check_dep_jq() {
+  hint_install_deb() { >&2 echo "  sudo apt-get install jq"; }
+  hint_install_brew() { >&2 echo "  brew install jq"; }
 
   check_dep_with_hint "jq"
 }
 
-check_dep_rg () {
-  hint_install_deb () { >&2 echo "  sudo apt-get install rg"; }
-  hint_install_brew () { >&2 echo "  brew install rg"; }
+check_dep_rg() {
+  hint_install_deb() { >&2 echo "  sudo apt-get install rg"; }
+  hint_install_brew() { >&2 echo "  brew install rg"; }
 
   check_dep_with_hint "rg"
 }
 
-check_dep_gvim_open_kindness () {
-  hint_install_gok () { >&2 echo "  https://github.com/DepoXy/gvim-open-kindness#🐬"; }
-  hint_install_deb () { hint_install_gok; }
-  hint_install_brew () { hint_install_gok; }
+check_dep_gvim_open_kindness() {
+  hint_install_gok() { >&2 echo "  https://github.com/DepoXy/gvim-open-kindness#🐬"; }
+  hint_install_deb() { hint_install_gok; }
+  hint_install_brew() { hint_install_gok; }
 
   check_dep_with_hint "gvim-open-kindness"
 }
 
-check_dep_mktemp () {
-  hint_install_deb () { >&2 echo "  sudo apt-get install coreutils"; }
-  hint_install_brew () { >&2 echo "  brew install coreutils"; }
+check_dep_mktemp() {
+  hint_install_deb() { >&2 echo "  sudo apt-get install coreutils"; }
+  hint_install_brew() { >&2 echo "  brew install coreutils"; }
 
   check_dep_with_hint "mktemp"
 }
 
 # Also `mktemp` is from coreutils on both OSes.
-check_dep_realpath () {
-  ( true \
-    && command -v realpath > /dev/null \
-    && realpath --version 2> /dev/null | head -1 | grep -q -e "(GNU coreutils)" \
+check_dep_realpath() {
+  (
+    true &&
+      command -v realpath >/dev/null &&
+      realpath --version 2>/dev/null | head -1 | grep -q -e "(GNU coreutils)"
   ) && return 0 || true
 
-  hint_install_deb () { >&2 echo "  sudo apt-get install coreutils"; }
-  hint_install_brew () { >&2 echo "  brew install realpath"; }
+  hint_install_deb() { >&2 echo "  sudo apt-get install coreutils"; }
+  hint_install_brew() { >&2 echo "  brew install realpath"; }
 
   check_dep_with_hint 'realpath' 'realpath (from coreutils)' true
 
   return 1
 }
 
-check_dep_with_hint () {
+check_dep_with_hint() {
   cmd="$1"
   name="${2:-${cmd}}"
   assume_failed=${3:-false}
 
   if ! ${assume_failed}; then
-    command -v ${cmd} > /dev/null && return 0 || true
+    command -v ${cmd} >/dev/null && return 0 || true
   fi
 
-  os_is_macos () { [ "$(uname)" = 'Darwin' ]; }
+  os_is_macos() { [ "$(uname)" = 'Darwin' ]; }
 
   >&2 echo "ERROR: Requires ‘${cmd}’"
   >&2 echo "- Hint: Install ‘${cmd}’, e.g.:"
-  os_is_macos && hint_install_brew || hint_install_deb 
+  os_is_macos && hint_install_brew || hint_install_deb
 
   return 1
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_mredit () {
+_mredit() {
   local try_path="$(pwd)"
 
   find_and_open_match "${try_path}"
@@ -124,7 +125,7 @@ _mredit () {
 
 # ***
 
-find_and_open_match () {
+find_and_open_match() {
   local try_path="$1"
 
   # Normalize the search path.
@@ -160,7 +161,7 @@ find_and_open_match () {
 
     local sub_pattern="(.+\\/)?${bname}"
 
-    match="$( \
+    match="$(
       print_match \
         "${sub_pattern}" "${MREDIT_CONFIGS}" "${MREDIT_PROG_F}" ${_braceless:-true}
     )"
@@ -206,7 +207,7 @@ find_and_open_match () {
 # ***
 
 # Opens result in (Terminal) vim.
-open_match_in_editor () {
+open_match_in_editor() {
   local match="$1"
   local use_gvim=$2
 
@@ -228,7 +229,7 @@ open_match_in_editor () {
   open_file_in_editor "${file}" "${row}" "${col}" "${use_gvim}"
 }
 
-open_file_in_editor () {
+open_file_in_editor() {
   local file="$1"
   local row="$2"
   local col="$3"
@@ -236,13 +237,13 @@ open_file_in_editor () {
 
   local editor="${EDITOR:-vim}"
 
-  looks_vimish () { echo "${editor}" | grep -q "vim"; }
+  looks_vimish() { echo "${editor}" | grep -q "vim"; }
 
   if ! ${use_gvim}; then
-    if looks_vimish \
-      && [ -n "${row}" ] \
-      && [ -n "${col}" ] \
-    ; then
+    if looks_vimish &&
+      [ -n "${row}" ] &&
+      [ -n "${col}" ] \
+      ; then
       ${editor} -c "call cursor(${row}, ${col})" "${file}"
     else
       ${editor} "${file}"
@@ -278,17 +279,17 @@ open_file_in_editor () {
 
 MREDIT_PROG_F=""
 
-create_progress_f () {
+create_progress_f() {
   MREDIT_PROG_F="$(mktemp)"
 }
 
-cleanup_progress_f () {
+cleanup_progress_f() {
   [ -e "${MREDIT_PROG_F}" ] || return 0
 
   command rm -f -- "${MREDIT_PROG_F}"
 }
 
-capture_progress () {
+capture_progress() {
   local error_f="$1"
   shift
 
@@ -298,28 +299,28 @@ capture_progress () {
     MREDIT_PROG_F="${error_f}"
   fi
 
-  echo "$@" >> "${error_f}"
+  echo "$@" >>"${error_f}"
 }
 
-report_progress () {
+report_progress() {
   [ -e "${MREDIT_PROG_F}" ] || return 0
- 
+
   >&2 cat -- "${MREDIT_PROG_F}"
 }
 
 # ***
 
-git_project_root_absolute () {
+git_project_root_absolute() {
   git rev-parse --show-toplevel
 }
 
-git_project_root_relative () {
+git_project_root_relative() {
   (cd "./$(git rev-parse --show-cdup)" && pwd -L)
 }
 
 # ***
 
-normal_path2mrconfig_path () {
+normal_path2mrconfig_path() {
   local omr_path="$1"
 
   # FIXME/2023-02-27: Decouple these translations.
@@ -342,7 +343,7 @@ normal_path2mrconfig_path () {
 
 # ***
 
-print_match () {
+print_match() {
   local rawpath="$1"
   local targetp="$2"
   local progr_f="$3"
@@ -395,7 +396,7 @@ print_match () {
       filenames="${filenames}${filepath}"$'\n'
       matches="${matches}${match}"$'\n'
     fi
-  done <<< "${matches_raw}"
+  done <<<"${matches_raw}"
 
   # Remove trailing blank line.
   matches="$(echo "${matches}" | sed '/^$/d')"
@@ -422,7 +423,7 @@ print_match () {
     >&2 echo "Multiple matches found:"
     # DEV:
     #   >&2 rg_search "${pattpath}" "${targetp}" false
-    
+
     if "${MREDIT_DISABLE_AUTO_MATCH:-false}"; then
       show_match_picker=true
     fi
@@ -437,8 +438,8 @@ print_match () {
   # Prompt user to pick a match.
 
   if ${show_match_picker} || [ -z "${picked_match}" ]; then
-    picked_match="$(prompt_user_pick_match "${matches}" "${picked_index}")" \
-      || return $?
+    picked_match="$(prompt_user_pick_match "${matches}" "${picked_index}")" ||
+      return $?
   elif [ ${n_matches} -gt 1 ]; then
     >&2 echo "Auto-picked [${picked_index}]: ${picked_file}"
     >&2 echo "- If you want to be prompted, use the --prompt option, e.g.:"
@@ -467,7 +468,7 @@ print_match () {
 #     picked_index=<1-based index>
 #     picked_file=<path>
 
-identify_auto_match_and_print_if_multiple_matches () {
+identify_auto_match_and_print_if_multiple_matches() {
   local matches="$1"
   local n_matches="$2"
 
@@ -497,10 +498,10 @@ identify_auto_match_and_print_if_multiple_matches () {
         show_match_picker=true
       fi
     fi
-  done <<< "${matches}"
+  done <<<"${matches}"
 }
 
-prompt_user_pick_match () {
+prompt_user_pick_match() {
   local matches="$1"
   local picked_index="$2"
 
@@ -527,7 +528,7 @@ prompt_user_pick_match () {
 
       break
     fi
-  done <<< "${matches}"
+  done <<<"${matches}"
 
   if [ -z "${picked_match}" ]; then
     >&2 echo "Nothing picked!"
@@ -540,7 +541,7 @@ prompt_user_pick_match () {
 
 # ***
 
-rg_search () {
+rg_search() {
   local pattpath="$1"
   local targetp="$2"
   local fmt_json=$3
@@ -566,29 +567,29 @@ rg_search () {
 MREDIT_USE_GVIM=${MREDIT_USE_GVIM:-false}
 MREDIT_DISABLE_AUTO_MATCH=${MREDIT_DISABLE_AUTO_MATCH:-false}
 
-parse_args () {
+parse_args() {
   while [ "$1" != '' ]; do
     case $1 in
-      -g | --gvim | gvim)
-        MREDIT_USE_GVIM=true
+    -g | --gvim | gvim)
+      MREDIT_USE_GVIM=true
 
-        shift
-        ;;
-      -p | --prompt | prompt)
-        MREDIT_DISABLE_AUTO_MATCH=true
+      shift
+      ;;
+    -p | --prompt | prompt)
+      MREDIT_DISABLE_AUTO_MATCH=true
 
-        shift
-        ;;
-      *)
-        >&2 echo "ERROR: Unrecognized argument: “$1”"
+      shift
+      ;;
+    *)
+      >&2 echo "ERROR: Unrecognized argument: “$1”"
 
-        exit 1
-        ;;
+      exit 1
+      ;;
     esac
   done
 }
 
-main () {
+main() {
   check_deps
 
   parse_args "$@"
@@ -598,14 +599,14 @@ main () {
   local cmd_status
 
   _mredit
-  ( [ ${cmd_status} -eq 0 ] \
-    && ! ${MREDIT_VERBOSE:-false} ] ) \
-    || report_progress
+  ([ ${cmd_status} -eq 0 ] &&
+    ! ${MREDIT_VERBOSE:-false} ]) ||
+    report_progress
 
   cleanup_progress_f
 
-  [ ${cmd_status} -eq 0 ] \
-    || return ${cmd_status}
+  [ ${cmd_status} -eq 0 ] ||
+    return ${cmd_status}
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -614,4 +615,3 @@ main () {
 if [ "$0" = "${BASH_SOURCE[0]}" ]; then
   main "$@"
 fi
-
