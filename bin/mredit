@@ -12,6 +12,7 @@ MREDIT_CONFIGS="${MREDIT_CONFIGS:-${HOME}/.mrconfiglns}"
 
 MREDIT_VERBOSE=${MREDIT_VERBOSE:-false}
 
+# Feature flag (that author has not disabled since added).
 match_loosely=true
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
