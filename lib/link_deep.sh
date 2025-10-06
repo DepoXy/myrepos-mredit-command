@@ -41,6 +41,9 @@ remove_symlink_hierarchy_safe() {
   # Remove symlinks.
   find "${target}" -type l -exec rm {} +
 
+  # Remove .DS_Store files.
+  find "${target}" -type f -name ".DS_Store" -exec rm {} +
+
   # Remove now-empty directories.
   local subdir
   find "${target}" ! -path "${target}" -type d | tac | while read -r subdir; do
