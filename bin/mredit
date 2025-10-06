@@ -379,7 +379,7 @@ print_match() {
     # - So maybe make match_loosely opt-in via CLI arg., vs.
     #   how it's currently enabled, via hardcoded feature flag
     #   atop this file.
-    # MAYBE: Also note the complicate ${pattpath} built above
+    # MAYBE: Also note the complicated ${pattpath} built above
     # is essentially pointless now, and all we really need is
     # the new ${sub_pattern} regex.
     local bname="$(basename -- "${rawpath}")"
