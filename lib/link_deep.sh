@@ -18,11 +18,15 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-remove_symlink_hierarchy_safe () {
+remove_symlink_hierarchy_safe() {
   local target="${1:-.}"
 
-  if [ -n "$( \
-    find "${target}" ! -type l ! -type d ! -name ".DS_Store" -print -quit \
+  if [ -n "$(
+    find "${target}" \
+      ! -type l \
+      ! -type d \
+      ! -name ".DS_Store" \
+      -print -quit
   )" ]; then
     local cwd=""
     [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd -L)]"
@@ -48,15 +52,15 @@ remove_symlink_hierarchy_safe () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-link_deep () {
+link_deep() {
   local source="$1"
   local target="$2"
 
   # Verify the source is complete path.
   local source_valid=false
   # COPYD: https://unix.stackexchange.com/a/256441/388857
-  case "${source}" in (/*) pathchk -- "${source}";; (*) ! : ;; esac \
-    && source_valid=true
+  case "${source}" in /*) pathchk -- "${source}" ;; *) ! : ;; esac &&
+    source_valid=true
 
   if ! ${source_valid}; then
     >&2 warn "Cannot link_deep relative path: ${source}"
@@ -137,4 +141,3 @@ link_deep () {
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-
