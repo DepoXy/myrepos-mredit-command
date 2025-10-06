@@ -200,7 +200,7 @@ find_and_open_match() {
 
       open_file_in_editor "${sect_cfg}" "" "" ${MREDIT_USE_GVIM}
 
-      return 0
+      cmd_status=0
     fi
 
     return ${cmd_status}
