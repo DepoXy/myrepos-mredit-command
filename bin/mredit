@@ -111,6 +111,10 @@ _mredit() {
     fi
   fi
 
+  if [ ${cmd_status} -ne 0 ]; then
+    find_and_open_section_config_file "${try_path}"
+  fi
+
   # If nothing found again or absolute path the same, cd up per
   # --show-cdup and get the path (which probably isn't what you
   # desire; if under a symlink to a different repo, --show-cdup
@@ -173,22 +177,37 @@ find_and_open_match() {
     fi
   fi
 
+  if [ ${cmd_status} -ne 0 ]; then
+
+    return ${cmd_status}
+  fi
+
+  open_match_in_editor "${match}" ${MREDIT_USE_GVIM}
+}
+
+find_and_open_section_config_file() {
+  local try_path="$1"
+
+  # Normalize the search path.
+  local omr_path
+  omr_path="$(normal_path2mrconfig_path "${try_path}")"
+
+  local match=""
+
   local sect_cfg=""
 
-  if [ ${cmd_status} -ne 0 ]; then
-    # See if `mr` has MR_SECTION_CONFIG environ (and if
-    # user's mrconfig calls `mr_cat` instead of just `cat`).
-    local mr_output
-    if mr_output="$(mr -d . -n run sh -c 'echo "$MR_SECTION_CONFIG"')"; then
-      sect_cfg="$(echo "${mr_output}" | head -n 1)"
-      if [ -n "${sect_cfg}" ]; then
-        echo "Found config via MR_SECTION_CONFIG: ${sect_cfg}"
+  # See if `mr` has MR_SECTION_CONFIG environ (and if
+  # user's mrconfig calls `mr_cat` instead of just `cat`).
+  local mr_output
+  if mr_output="$(mr -d . -n run sh -c 'echo "$MR_SECTION_CONFIG"')"; then
+    sect_cfg="$(echo "${mr_output}" | head -n 1)"
+    if [ -n "${sect_cfg}" ]; then
+      echo "Found config via MR_SECTION_CONFIG: ${sect_cfg}"
 
-        print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}"
+      print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}"
 
-        match="$(print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}")"
-        cmd_status=$?
-      fi
+      match="$(print_match "${omr_path}" "${sect_cfg}" "${MREDIT_PROG_F}")"
+      cmd_status=$?
     fi
   fi
 
