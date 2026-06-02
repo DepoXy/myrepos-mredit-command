@@ -18,6 +18,17 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+pwd_tilde_for_home() {
+  pwd "$@" | tilde_for_home
+}
+
+# COPYD: From Homefries. Also 3 def'ns in DepoXy. A very rare DRY defeat.
+tilde_for_home() {
+  sed -E "s#^${HOME}(/|$)#~\1#"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 remove_symlink_hierarchy_safe() {
   local target="${1:-.}"
 
@@ -29,7 +40,7 @@ remove_symlink_hierarchy_safe() {
       -print -quit
   )" ]; then
     local cwd=""
-    [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd -L)]"
+    [ "${target#/}" != "${target}" ] || cwd=" [from $(pwd_tilde_for_home -L)]"
 
     warn "Symlink hierarchy target exists but contains regular files"
     warn "- Please inspect yourself and try again: ${target}${cwd}"
@@ -110,19 +121,19 @@ link_deep() {
   #     ln: failed to create symbolic link 'foo': File exists
   if [ -h "${target}" ]; then
     if [ "$(realpath -- "${target}")" = "$(realpath -- "${source}")" ]; then
-      info " File already symlink: $(fg_lightred)$(pwd)/${target}$(attr_reset)"
+      info " File already symlink: $(fg_lightred)$(pwd_tilde_for_home)/${target}$(attr_reset)"
     else
-      >&2 warn "Target already exists: $(pwd)/${target}"
+      >&2 warn "Target already exists: $(pwd_tilde_for_home)/${target}"
       >&2 warn "- New source: ${source}"
       >&2 warn "- Old source: $(realpath -- "${source}")"
     fi
   elif [ -e "${target}" ]; then
-    >&2 warn "Nonlink target exists: $(pwd)/${target}"
+    >&2 warn "Nonlink target exists: $(pwd_tilde_for_home)/${target}"
     >&2 warn "- For source: ${source}"
   else
     info " $(fg_lightcyan)Created$(attr_reset)" \
       "$(attr_emphasis)deep$(attr_reset) symlink" \
-      "$(fg_lightorange)$(pwd)/${target}$(attr_reset)"
+      "$(fg_lightorange)$(pwd_tilde_for_home)/${target}$(attr_reset)"
 
     command ln -s -- "${source}" "${target}"
   fi
@@ -139,7 +150,7 @@ link_deep() {
     INFUSE_SYMLINKS_NOK="$((${INFUSE_SYMLINKS_NOK:-0} + 1))"
 
     >&2 warn "Phantom target symlinked:\n  ${source}"
-    >&2 warn "- You'll see broken symlink at:\n  $(pwd)/${target}"
+    >&2 warn "- You'll see broken symlink at:\n  $(pwd_tilde_for_home)/${target}"
   fi
 }
 
