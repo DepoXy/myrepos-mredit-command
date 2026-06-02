@@ -18,13 +18,19 @@ LINK_DEEP_SUB_HOME="${LINK_DEEP_SUB_HOME:-${HOME}}"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-pwd_tilde_for_home() {
-  pwd "$@" | tilde_for_home
-}
+# SETUP: Caller is expected to have loaded logger.sh.
+# - E.g., see this project's bin/infuse-configlns:
+#
+#     source_deps () {
+#       # Loads: info, warn, error, _sh_tilde_for_home.
+#       source_dep "deps/sh-logger/bin/logger.sh"
+#       source_dep "lib/link_deep.sh"
+#     }
 
-# COPYD: From Homefries. Also 3 def'ns in DepoXy. A very rare DRY defeat.
-tilde_for_home() {
-  sed -E "s#^${HOME}(/|$)#~\1#"
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+pwd_tilde_for_home() {
+  pwd "$@" | _sh_tilde_for_home
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
