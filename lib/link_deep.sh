@@ -157,6 +157,8 @@ link_deep() {
 
     >&2 warn "Phantom target symlinked:\n  ${source}"
     >&2 warn "- You'll see broken symlink at:\n  $(pwd_tilde_for_home)/${target}"
+    # SAVVY: Not returning nonzero; if user doesn't notice the
+    # warning message, they'll notice on next `rg` of the dir.
   fi
 }
 
