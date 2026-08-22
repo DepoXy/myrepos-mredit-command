@@ -281,7 +281,7 @@ open_file_in_editor() {
     else
       local servername=""
       if [ -n "${GVIM_OPEN_SERVERNAME}" ] || [ -z "${GVIM_OPEN_SERVERNAME+x}" ]; then
-        servername="--servername ${GVIM_OPEN_SERVERNAME:-SAMPI}"
+        servername="--servername ${GVIM_OPEN_SERVERNAME:-mredit}"
       fi
       gvim ${servername} --remote-silent "$(echo "${file}" | sed "s/^b//")"
       if [ -n "${row}" ] && [ -n "${col}" ]; then
